@@ -1,0 +1,12 @@
+[project]
+name = "motif-discovery"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.10.8",
+    "mir-eval>=0.8.2",
+    "numpy>=2.4.2",
+    "pretty-midi>=0.2.11",
+]
