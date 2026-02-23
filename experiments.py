@@ -91,7 +91,21 @@ def load_all_notes(filename):
     with open(filename, 'r') as f:
         reader = csv.reader(f, delimiter=',')
         next(reader) # skip header
-        notes = np.array([tuple([x for i, x in enumerate(row) if i != 2]) for row in reader], dtype=dt)
+
+        rows = []
+        for row in reader:
+            filtered = [x for i, x in enumerate(row) if i != 2]
+
+            rows.append((
+                float(filtered[0]),
+                int(float(filtered[1])),
+                float(filtered[2]),
+                int(float(filtered[3])),
+                int(float(filtered[4])),
+                filtered[5] if len(filtered) > 5 else ''
+            ))
+
+    notes = np.array(rows, dtype=dt)
 
     # Get unique notes irrespective of 'staffNum'
     _, unique_indices = np.unique(notes[['onset', 'pitch']], return_index=True)
