@@ -10,3 +10,10 @@ dependencies = [
     "numpy>=2.4.2",
     "pretty-midi>=0.2.11",
 ]
+
+[project.scripts]
+motif-discovery = "motif_discovery.cli:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
