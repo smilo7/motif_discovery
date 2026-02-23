@@ -19,28 +19,61 @@ from mir_eval.pattern import establishment_FPR, occurrence_FPR, three_layer_FPR
 '''Baseline algorithms'''
 '''https://github.com/wsgan001/repeated_pattern_discovery'''
 '''@repeated_pattern_discovery-master'''
+from pathlib import Path
 import sys
-sys.path.insert(1, r'\repeated_pattern_discovery-master')
+
+# --------------------------------------------------
+# Base project directory (folder where this script lives)
+# --------------------------------------------------
+BASE_DIR = Path(__file__).resolve().parent
+
+# --------------------------------------------------
+# External repository: repeated_pattern_discovery
+# --------------------------------------------------
+REPEATED_PATTERN_DIR = BASE_DIR / "repeated_pattern_discovery"
+sys.path.insert(0, str(REPEATED_PATTERN_DIR))
+
+
 from dataset import Dataset
 from vector import Vector
 import new_algorithms
 import orig_algorithms
 
-'''Directory of the Beethoven motif dataset'''
-'''@Beethoven_motif-main'''
-csv_note_dir = r'\Beethoven_motif-main\csv_notes'
-csv_label_dir = r'\Beethoven_motif-main\csv_label'
-motif_midi_dir = r'\Beethoven_motif-main\motif_midi'
 
-'''Directory of the experiment dataset'''
-'''@experiment_datasets'''
-baseline_note_dir = r'\experiment_datasets\TsungPings_test_motif_dataset'
+# --------------------------------------------------
+# Beethoven motif dataset
+# --------------------------------------------------
+BEETHOVEN_DIR = BASE_DIR / "Beethoven_motif"
+csv_note_dir = BEETHOVEN_DIR / "csv_notes"
+csv_label_dir = BEETHOVEN_DIR / "csv_label"
+motif_midi_dir = BEETHOVEN_DIR / "motif_midi"
 
-'''directory of the JKUPDD dataset'''
-jkupdd_data_dir = r'\JKUPDD\JKUPDD-noAudio-Aug2013\groundTruth'
-jkupdd_corpus = ['bachBWV889Fg', 'beethovenOp2No1Mvt3', 'chopinOp24No4', 'gibbonsSilverSwan1612', 'mozartK282Mvt2']
-jkupdd_notes_csv = ['wtc2f20.csv', 'sonata01-3.csv', 'mazurka24-4.csv', 'silverswan.csv', 'sonata04-2.csv']
+# --------------------------------------------------
+# Experiment dataset
+# --------------------------------------------------
+baseline_note_dir = BASE_DIR / "experiment_datasets" / "TsungPings_test_motif_dataset"
 
+# --------------------------------------------------
+# JKUPDD dataset
+# --------------------------------------------------
+JKUPDD_DIR = BASE_DIR / "JKUPDD" / "JKUPDD-noAudio-Aug2013" / "groundTruth"
+jkupdd_data_dir = JKUPDD_DIR
+
+jkupdd_corpus = [
+    "bachBWV889Fg",
+    "beethovenOp2No1Mvt3",
+    "chopinOp24No4",
+    "gibbonsSilverSwan1612",
+    "mozartK282Mvt2"
+]
+
+jkupdd_notes_csv = [
+    "wtc2f20.csv",
+    "sonata01-3.csv",
+    "mazurka24-4.csv",
+    "silverswan.csv",
+    "sonata04-2.csv"
+]
 
 def load_all_notes(filename):
     '''Load all notes from CSV file'''
@@ -57,6 +90,7 @@ def load_all_notes(filename):
     # Format data as structured array
     with open(filename, 'r') as f:
         reader = csv.reader(f, delimiter=',')
+        next(reader) # skip header
         notes = np.array([tuple([x for i, x in enumerate(row) if i != 2]) for row in reader], dtype=dt)
 
     # Get unique notes irrespective of 'staffNum'
@@ -157,14 +191,19 @@ def main():
         filename_notes = os.path.join(csv_note_dir, piece+'-1.csv')
         filename_csv = os.path.join(csv_label_dir, piece+'-1.csv')
         filename_midi = os.path.join(motif_midi_dir, piece+'-1.mid')
-        notes = load_all_notes(filename_notes)
+        # notes = load_all_notes(filename_notes)
+        notes = load_all_notes(filename_notes)[:100]
         motives = load_all_motives(filename_csv, filename_midi)
 
         # Convert motives to mir_eval format
         patterns_ref = [[list(occur[['onset', 'pitch']]) for occur in motif] for motif in motives.values()]
 
         start_time = time.time()
+
+        print("Starting motif discovery...")
         patterns_est = find_motives(notes)
+        print("Finished motif discovery.")
+
         runtime_one = time.time() - start_time
         runtime += runtime_one
         print('runtime_one %.4f' % runtime_one)
@@ -355,10 +394,10 @@ def jkupdd_eval():
     total_n_notes = 0
     for i in range(5):
         print('file %s' % jkupdd_notes_csv[i])
-        note_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], 'polyphonic\csv', jkupdd_notes_csv[i])
-        pattern_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], r'polyphonic\repeatedPatterns')
-        # note_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], 'polyphonic/csv', jkupdd_notes_csv[i])
-        # pattern_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], 'polyphonic/repeatedPatterns')
+        # note_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], 'polyphonic\csv', jkupdd_notes_csv[i])
+        # pattern_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], r'polyphonic\repeatedPatterns')
+        note_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], 'polyphonic/csv', jkupdd_notes_csv[i])
+        pattern_csv_dir = jpath(jkupdd_data_dir, jkupdd_corpus[i], 'polyphonic/repeatedPatterns')
         notes = load_jkupdd_notes_csv(note_csv_dir)
         dataset = Dataset(note_csv_dir)
         dataset._vectors = [Vector(list(x)[:2]) for x in dataset]
